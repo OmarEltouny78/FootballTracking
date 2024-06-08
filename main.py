@@ -17,14 +17,10 @@ def main():
     tracks = tracker.get_object_tracks(video_frames,
                                        read_from_stub=True,
                                        stub_path='stubs/track_stubs.pkl')
-    # Get object positions 
 
 
     # Interpolate Ball Positions
     tracks["ball"] = tracker.interpolate_ball_position(tracks["ball"])
-
-    # Speed and distance estimator
-  
 
     # Assign Player Teams
     team_assigner = TeamAssigner()
@@ -39,13 +35,13 @@ def main():
             tracks['players'][frame_num][player_id]['team'] = team 
             tracks['players'][frame_num][player_id]['team_color'] = team_assigner.team_colors[team]
 
-    
-    # Assign Ball Aquisition
+    #Assign ball possesion
     player_assigner =PlayerBallAssigner()
     team_ball_control= []
     for frame_num, player_track in enumerate(tracks['players']):
         ball_bbox = tracks['ball'][frame_num][1]['bbox']
         assigned_player = player_assigner.assign_ball_to_player(player_track, ball_bbox)
+    # Assign Ball Aquisition
 
         if assigned_player != -1:
             tracks['players'][frame_num][assigned_player]['has_ball'] = True

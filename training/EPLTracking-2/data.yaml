@@ -1,0 +1,15 @@
+names:
+- ball
+- goalkeeper
+- player
+- refree
+nc: 4
+roboflow:
+  license: CC BY 4.0
+  project: epltracking
+  url: https://universe.roboflow.com/footballplayertracking/epltracking/dataset/2
+  version: 2
+  workspace: footballplayertracking
+test: ../test/images
+train: EPLTracking-2/train/images
+val: EPLTracking-2/valid/images
