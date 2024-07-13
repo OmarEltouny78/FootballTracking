@@ -1,5 +1,5 @@
 from sklearn.cluster import KMeans
-
+import cv2
 class TeamAssigner:
     def __init__(self):
         self.team_colors = {}
@@ -15,10 +15,13 @@ class TeamAssigner:
 
         return kmeans
 
-    def get_player_color(self,frame,bbox):
+
+    
+    def get_player_color(self,frame,bbox,count=0):
         image = frame[int(bbox[1]):int(bbox[3]),int(bbox[0]):int(bbox[2])]
 
         top_half_image = image[0:int(image.shape[0]/2),:]
+
 
         # Get Clustering model
         kmeans = self.get_clustering_model(top_half_image)
@@ -40,11 +43,12 @@ class TeamAssigner:
 
 
     def assign_team_color(self,frame, player_detections):
-        
         player_colors = []
+        count=0
         for _, player_detection in player_detections.items():
             bbox = player_detection["bbox"]
-            player_color =  self.get_player_color(frame,bbox)
+            player_color =  self.get_player_color(frame,bbox,count)
+            count+=1
             player_colors.append(player_color)
         
         kmeans = KMeans(n_clusters=2, init="k-means++",n_init=10)

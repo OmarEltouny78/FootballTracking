@@ -7,7 +7,7 @@ import cv2
 import sys
 import pandas as pd
 sys.path.append('../')
-from utils import get_bbox_width,get_center_of_bbox
+from utils import get_bbox_width,get_center_of_bbox,get_foot_position
 class Tracker:
     def __init__(self,model_path) -> None:
         self.model=YOLO(model_path)
@@ -20,6 +20,17 @@ class Tracker:
             detections_batch=self.model.predict(frames[i:i+batch_size],conf=0.1)
             detections+=detections_batch
         return detections
+    def add_position_to_tracks(sekf,tracks):
+        for object, object_tracks in tracks.items():
+            for frame_num, track in enumerate(object_tracks):
+                for track_id, track_info in track.items():
+                    bbox = track_info['bbox']
+                    if object == 'ball':
+                        position= get_center_of_bbox(bbox)
+                    else:
+                        position = get_foot_position(bbox)
+                    tracks[object][frame_num][track_id]['position'] = position
+    
     def get_object_tracks(self,frames, read_from_stub=False, stub_path=None):
 
     
@@ -119,10 +130,16 @@ class Tracker:
     def draw_annotations(self,video_frames,tracks,team_ball_control):
         output_video_frames=[]
         for frame_num,frame in enumerate(video_frames):
-            player_dict=tracks['players'][frame_num]
-            ball_dict=tracks['ball'][frame_num]
-            ref_dict=tracks['refrees'][frame_num]
+            try:
+
+                player_dict=tracks['players'][frame_num]
+                ball_dict=tracks['ball'][frame_num]
+                ref_dict=tracks['refrees'][frame_num]
+            except IndexError:
+                print('Frame num does not have detections' + str(frame_num))
+                continue
             for track_id,player in player_dict.items():
+
                 color = player.get("team_color",(0,0,255))
                 frame=self.draw_ellipse(frame,player['bbox'],color,track_id)
                 if player.get('has_ball',False):
@@ -134,6 +151,12 @@ class Tracker:
             frame = self.draw_team_ball_control(frame, frame_num, team_ball_control)
             output_video_frames.append(frame)
         return output_video_frames
+    
+    def draw_number(self,frame,bbox,color,number):
+        y= int(bbox[1])
+        x,_ = get_center_of_bbox(bbox)
+        cv2.putText(frame, str(number),(x,y+10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
+        return frame
     def draw_traingle(self,frame,bbox,color):
 
         y= int(bbox[1])
@@ -175,6 +198,6 @@ class Tracker:
         team_2 = team_2_num_frames/(team_1_num_frames+team_2_num_frames)
 
         cv2.putText(frame, f"Team 1 Ball Control: {team_1*100:.2f}%",(100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 3)
-        cv2.putText(frame, f"Team 2 Ball Control: {team_2*100:.2f}%",(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 3)
+        cv2.putText(frame, f"Team 2 Ball Control: {team_2*100:.2f}%",(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 3)
 
         return frame
